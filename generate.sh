@@ -1,9 +1,11 @@
 #!/bin/bash
+set -e
 if [ -d /state ]; then 
-    python3 /generate.py
+    .venv/bin/python3 generate.py
     pushd terraform
-    ls -la
-    cat ganymede.tf
+    tofu init
+    tofu plan -out plan 
+    tofu apply plan
     popd
 else
     echo "No state persistance"

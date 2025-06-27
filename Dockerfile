@@ -9,7 +9,8 @@ COPY generate.sh /generate.sh
 COPY requirements.txt /requirements.txt
 ADD terraform /terraform
 RUN apk add --update --no-cache curl bash && \
-pip install -r /requirements.txt && rm -rf requirements.txt
+python3 -m venv .venv &&\
+.venv/bin/pip3 install -r /requirements.txt && rm -rf requirements.txt
 
 
 ENTRYPOINT ["/generate.sh"]

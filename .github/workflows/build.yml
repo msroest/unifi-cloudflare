@@ -1,0 +1,47 @@
+name: BuildAndRelease
+on:
+  - push
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Log in to Docker Hub
+        if: github.ref == 'refs/heads/main'
+        uses: docker/login-action@v3
+        with:
+          username: ${{ secrets.DOCKERHUB_USERNAME }}
+          password: ${{ secrets.DOCKERHUB_TOKEN }}
+      
+      - name: Get commit message
+        id: get_commit
+        run: echo "message=$(git log -1 --pretty=%B)" >> $GITHUB_OUTPUT
+
+      - name: Build and conditionally push multi-arch image
+        uses: docker/build-push-action@v5
+        with:
+          context: .
+          push: ${{ github.ref == 'refs/heads/main' }}
+          tags: |
+             ${{ secrets.DOCKERHUB_USERNAME }}/unifi-cloudflare:latest
+             ${{ secrets.DOCKERHUB_USERNAME }}/unifi-cloudflare:${{ github.run_number }}
+          platforms: linux/amd64,linux/arm64
+
+      - name: Create GitHub Release
+        if: github.ref == 'refs/heads/main'
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: ${{ github.run_number }}
+          name: ${{ github.run_number }}
+          body: |
+            Docker image: `msroest/unifi-cloudflare:${{ github.run_number }}`
+            Commit message: ${{ steps.get_commit.outputs.message }}
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
