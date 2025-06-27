@@ -1,7 +1,8 @@
 name: BuildAndRelease
 on:
   - push
-
+permissions:
+  contents: write
 jobs:
   build:
     runs-on: ubuntu-latest
@@ -43,5 +44,3 @@ jobs:
           body: |
             Docker image: `msroest/unifi-cloudflare:${{ github.run_number }}`
             Commit message: ${{ steps.get_commit.outputs.message }}
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
