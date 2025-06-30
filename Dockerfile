@@ -10,8 +10,6 @@ COPY requirements.txt /requirements.txt
 ADD terraform /terraform
 RUN apk add --update --no-cache curl bash && \
 python3 -m venv .venv &&\
-.venv/bin/pip3 install -r /requirements.txt && rm -rf requirements.txt && \
-cd terraform && tofu init && cd ..
-
+.venv/bin/pip3 install -r /requirements.txt && rm -rf requirements.txt
 
 ENTRYPOINT ["/generate.sh"]
