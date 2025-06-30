@@ -3,10 +3,10 @@ set -e
 if [ -d /state ]; then 
     .venv/bin/python3 generate.py
     pushd terraform
-    tofu init
-    tofu plan -out plan
+    terraform init
+    terraform plan -out plan
     if [ "$APPLY" == "true" ]; then
-       tofu apply plan
+       terraform apply plan
     fi
     popd
 else
