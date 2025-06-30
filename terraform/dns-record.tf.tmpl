@@ -1,4 +1,4 @@
-resource "cloudflare_dns_record" "<HOSTNAME>" {
+resource "cloudflare_dns_record" "dns-<HOSTNAME>" {
     zone_id = var.zone_id
     content = "<IP>"
     name = "<HOSTNAME>.${var.dns_base}"
