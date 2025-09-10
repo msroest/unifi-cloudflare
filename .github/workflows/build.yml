@@ -23,7 +23,7 @@ jobs:
       
       - name: Get commit message
         id: get_commit
-        run: echo "message=$(git log -1 --pretty=%B)" >> $GITHUB_OUTPUT
+        run: echo "message=\"$(git log -1 --pretty=%B)\"" >> $GITHUB_OUTPUT
 
       - name: Build and conditionally push multi-arch image
         uses: docker/build-push-action@v5
