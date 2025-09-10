@@ -1,4 +1,4 @@
-FROM hashicorp/terraform:1.12 AS terraform
+FROM hashicorp/terraform:1.13 AS terraform
 
 FROM python:3-alpine
 
