@@ -21,12 +21,17 @@ async def list_clients(controller):
     clients={}
     await controller.clients.update()
     for client in controller.clients.values():
-        hostname = client.hostname or client.name
+        hostname = client.hostname or client.name or client.mac.replace(":","-")
         ip = client.ip
         hostname=re.sub(r"[^a-z0-9A-Z\-_\.]","",hostname).lower()
         if hostname=='' or ip=='':
             continue
         clients[hostname]=ip
+        # if there is a name set also add a dns record for that.
+        if hostname != client.name and client.name:
+            print(hostname)
+            print(client.name)
+            clients[re.sub(r"[^a-z0-9A-Z\-_\.]","",client.name).lower()] = ip
     return clients
 
 def generate_terraform(clients):
