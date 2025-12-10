@@ -1,6 +1,6 @@
 FROM hashicorp/terraform:1.13 AS terraform
 
-FROM python:3-alpine
+FROM python:3-alpine3.22
 
 COPY --from=terraform /bin/terraform /usr/local/bin/terraform
 
