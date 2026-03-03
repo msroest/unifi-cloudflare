@@ -1,6 +1,6 @@
 FROM docker.io/hashicorp/terraform:1.14 AS terraform
 
-FROM python:3-alpine3.23
+FROM docker.io/python:3-alpine3.23
 
 COPY --from=terraform /bin/terraform /usr/local/bin/terraform
 
