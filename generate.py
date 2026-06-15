@@ -11,27 +11,46 @@ from aiounifi.models.configuration import Configuration
 
 TMPL_FILE="terraform/dns-record.tf.tmpl"
 OUTPUT_PATH="terraform"
+
 def get_env_var(name, default=None, required=False):
     value = os.getenv(name, default)
     if required and value is None:
         raise ValueError(f"Missing required environment variable: {name}")
     return value
 
-async def list_clients(controller):
+def normalize_hostname(hostname):
+    return re.sub(r"[^a-z0-9A-Z\-_\.]", "", hostname).lower()
+
+def parse_hostname_filter(raw_value):
+    excluded = set()
+    for hostname in raw_value.split(","):
+        normalized = normalize_hostname(hostname.strip())
+        if normalized:
+            excluded.add(normalized)
+    return excluded
+
+async def list_clients(controller, excluded_hostnames=None):
+    excluded_hostnames = set(excluded_hostnames or [])
     clients={}
     await controller.clients.update()
     for client in controller.clients.values():
-        hostname = client.hostname or client.name or client.mac.replace(":","-")
+        primary_hostname_raw = client.hostname or client.name or client.mac.replace(":","-")
         ip = client.ip
-        hostname=re.sub(r"[^a-z0-9A-Z\-_\.]","",hostname).lower()
+        hostname=normalize_hostname(primary_hostname_raw)
         if hostname=='' or ip=='':
             continue
-        clients[hostname]=ip
-        # if there is a name set also add a dns record for that.
-        if hostname != client.name and client.name:
-            print(hostname)
-            print(client.name)
-            clients[re.sub(r"[^a-z0-9A-Z\-_\.]","",client.name).lower()] = ip
+        if hostname not in excluded_hostnames:
+            clients[hostname]=ip
+        else:
+            print(f"Skipping excluded hostname: {hostname}")
+        # If there is a name set also add a dns record for that.
+        if client.name:
+            alias = normalize_hostname(client.name)
+            if alias and alias != hostname:
+                if alias not in excluded_hostnames:
+                    clients[alias] = ip
+                else:
+                    print(f"Skipping excluded hostname: {alias}")
     return clients
 
 def generate_terraform(clients):
@@ -57,6 +76,9 @@ async def main():
     site = get_env_var("UNIFI_SITE", 'default')
     ssl_verify_str = get_env_var("UNIFI_SSL_VERIFY", "true").lower()
     ssl_verify = ssl_verify_str not in ["false", "0", "no"]
+    excluded_hostnames = parse_hostname_filter(get_env_var("UNIFI_EXCLUDE_HOSTNAMES", ""))
+    if excluded_hostnames:
+        print(f"Excluding hostnames: {', '.join(sorted(excluded_hostnames))}")
     async with aiohttp.ClientSession(cookie_jar=aiohttp.CookieJar(unsafe=True)) as session:
         config = Configuration(
             host= host,
@@ -76,7 +98,7 @@ async def main():
             print(f"Logging into {host}")
             await controller.login()
             print("Fetching Clients...")
-            clients = await list_clients(controller)
+            clients = await list_clients(controller, excluded_hostnames)
             print("Generating Terraform...")
             generate_terraform(clients)
         except Exception as e:
