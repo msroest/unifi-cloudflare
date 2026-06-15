@@ -8,6 +8,11 @@ Builds of this utility are published to [Docker Hub](https://hub.docker.com/r/ms
 docker run -it --rm --env-file environment.env -v <local state storage location>:/state msroest/unifi-cloudflare:latest
 ```
 
+To exclude specific hostnames from DNS record generation, add a comma-separated list to `UNIFI_EXCLUDE_HOSTNAMES`.
+The values are matched against the generated Terraform hostname after the tool's existing sanitization:
+
+```
+UNIFI_EXCLUDE_HOSTNAMES=printer01,guest-wifi,lab-pc
+```
+
 Due to limitations with the cloudflare terraform provider you will need to delete any existing cloudflare DNS records for records that will be created by this tool.
-
-
